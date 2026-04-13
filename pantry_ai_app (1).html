@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PantryAI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0D0F;--bg2:#111418;--bg3:#181D22;--bg4:#1E242B;
+  --border:#2A3340;--border2:#3A4550;
+  --text:#F0F4F8;--text2:#8A9BAD;--text3:#5A6A7A;
+  --green:#22C55E;--green2:#16A34A;--green3:#052E16;
+  --blue:#3B82F6;--blue2:#1D4ED8;--blue3:#0A1628;
+  --amber:#F59E0B;--amber2:#D97706;--amber3:#1C1000;
+  --red:#EF4444;--red2:#B91C1C;--red3:#1C0505;
+  --teal:#14B8A6;--teal2:#0D9488;--teal3:#031A18;
+  --purple:#A855F7;--purple2:#7C3AED;--purple3:#180B2E;
+  --radius:12px;--radius2:8px;
+  --font-main:'DM Sans',sans-serif;
+  --font-display:'DM Serif Display',serif;
+}
+body{font-family:var(--font-main);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0}
+.logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+.logo-title{font-family:var(--font-display);font-size:26px;color:var(--text);letter-spacing:-0.5px}
+.logo-sub{font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.api-section{padding:16px;border-bottom:1px solid var(--border)}
+.api-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.api-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:9px 12px;color:var(--text);font-size:12px;font-family:var(--font-main);outline:none;transition:border 0.2s}
+.api-input:focus{border-color:var(--teal2)}
+.api-input::placeholder{color:var(--text3)}
+.api-badge{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--text3)}
+.dot.connected{background:var(--green);box-shadow:0 0 8px var(--green)}
+.nav{padding:16px 10px;flex:1}
+.nav-section{margin-bottom:20px}
+.nav-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;padding:0 10px;margin-bottom:6px}
+.nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius2);border:none;background:transparent;color:var(--text2);font-family:var(--font-main);font-size:13.5px;cursor:pointer;transition:all 0.15s;text-align:left}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.active{background:var(--bg4);color:var(--text);border-left:2px solid var(--teal)}
+.nav-icon{width:18px;height:18px;opacity:0.7;flex-shrink:0}
+.nav-btn.active .nav-icon{opacity:1}
+.lang-toggle{padding:16px;border-top:1px solid var(--border);display:flex;gap:6px}
+.lang-btn{flex:1;padding:7px;border-radius:var(--radius2);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-family:var(--font-main);cursor:pointer;transition:all 0.15s}
+.lang-btn.active{background:var(--teal3);border-color:var(--teal2);color:var(--teal)}
+.main{display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)}
+.page-title{font-size:20px;font-weight:500;letter-spacing:-0.3px}
+.page-sub{font-size:13px;color:var(--text3);margin-top:2px}
+.topbar-actions{display:flex;gap:8px}
+.btn{display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--radius2);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--font-main);font-size:13px;cursor:pointer;transition:all 0.2s}
+.btn:hover{background:var(--bg4);border-color:var(--border2)}
+.btn.primary{background:var(--teal3);border-color:var(--teal2);color:var(--teal)}
+.btn.primary:hover{background:var(--teal2);color:#fff}
+.btn.danger{background:var(--red3);border-color:var(--red2);color:var(--red)}
+.content{padding:28px;flex:1;overflow-y:auto}
+.panel{display:none}
+.panel.active{display:block}
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:60px 20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--teal2);background:var(--teal3)}
+.upload-icon{font-size:40px;margin-bottom:12px}
+.upload-title{font-size:16px;font-weight:500;margin-bottom:6px}
+.upload-sub{font-size:13px;color:var(--text3)}
+.upload-input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.preview-container{position:relative;margin-top:20px;border-radius:var(--radius);overflow:hidden;background:var(--bg3);border:1px solid var(--border)}
+.preview-img{width:100%;max-height:340px;object-fit:contain;display:block}
+.preview-overlay{position:absolute;bottom:0;left:0;right:0;padding:16px;background:linear-gradient(transparent,rgba(0,0,0,0.85));display:flex;gap:8px}
+.analyze-bar{display:flex;gap:8px;margin-top:16px;align-items:center}
+.analyze-opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.15s}
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chip.active{background:var(--teal3);border-color:var(--teal2);color:var(--teal)}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:20px}
+.product-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:all 0.2s;cursor:pointer}
+.product-card:hover{border-color:var(--border2);background:var(--bg4)}
+.product-name{font-size:14px;font-weight:500;margin-bottom:4px}
+.product-cat{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.product-qty{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.qty-controls{display:flex;align-items:center;gap:8px}
+.qty-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--bg4);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.qty-btn:hover{background:var(--border2)}
+.qty-val{font-size:14px;font-weight:500;min-width:20px;text-align:center}
+.status-badge{font-size:10px;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:500}
+.status-ok{background:var(--green3);color:var(--green);border:1px solid var(--green2)}
+.status-low{background:var(--amber3);color:var(--amber);border:1px solid var(--amber2)}
+.status-out{background:var(--red3);color:var(--red);border:1px solid var(--red2)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.stat-val{font-size:26px;font-weight:500;letter-spacing:-0.5px}
+.stat-label{font-size:12px;color:var(--text3);margin-top:4px}
+.stat-icon{font-size:22px;margin-bottom:8px}
+.section-title{font-size:15px;font-weight:500;margin-bottom:12px;color:var(--text2)}
+.inventory-table{width:100%;border-collapse:collapse}
+.inventory-table th{text-align:left;padding:10px 14px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+.inventory-table td{padding:12px 14px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+.inventory-table tr:hover td{background:var(--bg3)}
+.inventory-table tr:last-child td{border:none}
+.progress-bar{width:80px;height:5px;border-radius:3px;background:var(--border);overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.3s}
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 130px)}
+.chat-messages{flex:1;overflow-y:auto;padding:0 0 20px}
+.chat-msg{margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.chat-avatar{width:32px;height:32px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.avatar-ai{background:var(--teal3);border:1px solid var(--teal2)}
+.avatar-user{background:var(--purple3);border:1px solid var(--purple2)}
+.chat-bubble{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 15px;font-size:14px;line-height:1.6;max-width:680px}
+.chat-bubble.user{background:var(--purple3);border-color:var(--purple2)}
+.chat-bubble strong{color:var(--teal)}
+.chat-input-area{display:flex;gap:10px;align-items:flex-end;padding:16px 0 0;border-top:1px solid var(--border)}
+.chat-textarea{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:12px 14px;color:var(--text);font-family:var(--font-main);font-size:14px;resize:none;outline:none;min-height:44px;max-height:120px;transition:border 0.2s}
+.chat-textarea:focus{border-color:var(--teal2)}
+.send-btn{width:44px;height:44px;border-radius:var(--radius2);border:none;background:var(--teal2);color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.send-btn:hover{background:var(--teal)}
+.nutrition-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.nutrition-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.nutrition-title{font-size:16px;font-weight:500;margin-bottom:4px}
+.nutrition-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+.nut-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+.nut-row:last-child{border:none}
+.nut-val{color:var(--teal);font-weight:500}
+.nut-bar-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.nut-bar-label{font-size:12px;color:var(--text2);width:110px;flex-shrink:0}
+.nut-bar-wrap{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.nut-bar-fill{height:100%;border-radius:3px}
+.loader{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:16px}
+.loader.show{display:flex}
+.spinner{width:36px;height:36px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{color:var(--text2);font-size:14px}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:0.3px;margin:2px}
+.tag-green{background:var(--green3);color:var(--green);border:1px solid var(--green2)}
+.tag-blue{background:var(--blue3);color:var(--blue);border:1px solid var(--blue2)}
+.tag-amber{background:var(--amber3);color:var(--amber);border:1px solid var(--amber2)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-title{font-size:16px;color:var(--text2);margin-bottom:6px}
+.settings-row{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--border)}
+.settings-label{font-size:14px;font-weight:500;margin-bottom:3px}
+.settings-desc{font-size:12px;color:var(--text3)}
+.settings-ctrl{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:20px}
+.toggle{width:42px;height:24px;border-radius:12px;background:var(--border2);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0}
+.toggle.on{background:var(--teal2)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left 0.2s}
+.toggle.on::after{left:21px}
+.select{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:7px 12px;color:var(--text);font-family:var(--font-main);font-size:13px;outline:none;cursor:pointer}
+.select:focus{border-color:var(--teal2)}
+.github-banner{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;align-items:flex-start;gap:16px;margin-top:24px}
+.github-icon{font-size:28px;flex-shrink:0}
+.github-code{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;margin-top:12px;font-size:12px;color:var(--text2);line-height:1.8;font-family:monospace;white-space:pre}
+.github-code .c{color:var(--text3)}
+.github-code .k{color:var(--purple)}
+.github-code .s{color:var(--green)}
+.github-code .v{color:var(--teal)}
+.alert{padding:12px 16px;border-radius:var(--radius2);font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.alert-warn{background:var(--amber3);border:1px solid var(--amber2);color:var(--amber)}
+.alert-info{background:var(--blue3);border:1px solid var(--blue2);color:var(--blue)}
+.alert-success{background:var(--green3);border:1px solid var(--green2);color:var(--green)}
+.tab-bar{display:flex;gap:4px;margin-bottom:20px;background:var(--bg3);padding:4px;border-radius:var(--radius);border:1px solid var(--border)}
+.tab{flex:1;padding:8px;border-radius:var(--radius2);border:none;background:transparent;color:var(--text2);font-family:var(--font-main);font-size:13px;cursor:pointer;transition:all 0.15s}
+.tab.active{background:var(--bg4);color:var(--text);border:1px solid var(--border2)}
+.product-detail{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:none}
+.product-detail.show{display:block}
+</style>
+</head>
+<body>
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden">PantryAI — Intelligent pantry manager with Gemini AI vision</h2>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-title">PantryAI</div>
+    <div class="logo-sub">Powered by Gemini</div>
+  </div>
+
+  <div class="api-section">
+    <div class="api-label" id="lbl-apikey">Gemini API Key</div>
+    <input type="password" class="api-input" id="apiKeyInput" placeholder="AIzaSy..." oninput="updateApiStatus()"/>
+    <div class="api-badge">
+      <div class="dot" id="apiDot"></div>
+      <span id="apiStatus" style="color:var(--text3);font-size:11px">Not connected</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">
+      <div class="nav-label" id="lbl-main">Main</div>
+      <button class="nav-btn active" onclick="showPanel('scan')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span id="nav-scan">Scan Pantry</span>
+      </button>
+      <button class="nav-btn" onclick="showPanel('inventory')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
+        <span id="nav-inventory">Inventory</span>
+      </button>
+      <button class="nav-btn" onclick="showPanel('nutrition')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l4 4"/></svg>
+        <span id="nav-nutrition">Nutrition</span>
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label" id="lbl-ai">AI Assistant</div>
+      <button class="nav-btn" onclick="showPanel('research')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+        <span id="nav-research">Food Research</span>
+      </button>
+      <button class="nav-btn" onclick="showPanel('chat')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span id="nav-chat">AI Chat</span>
+      </button>
+      <button class="nav-btn" onclick="showPanel('meal')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        <span id="nav-meal">Meal Planner</span>
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label" id="lbl-tools">Tools</div>
+      <button class="nav-btn" onclick="showPanel('shopping')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+        <span id="nav-shopping">Shopping List</span>
+      </button>
+      <button class="nav-btn" onclick="showPanel('settings')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span id="nav-settings">Settings</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="langEN" onclick="setLang('en')">🇺🇸 EN</button>
+    <button class="lang-btn" id="langES" onclick="setLang('es')">🇲🇽 ES</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">Scan Pantry</div>
+      <div class="page-sub" id="pageSub">Upload a photo to analyze your pantry with AI</div>
+    </div>
+    <div class="topbar-actions" id="topbarActions">
+      <button class="btn primary" onclick="triggerUpload()" id="uploadBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        <span id="btn-upload">Upload Photo</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- SCAN PANEL -->
+    <div class="panel active" id="panel-scan">
+      <div id="scanLoading" class="loader"><div class="spinner"></div><div class="loader-text" id="loaderMsg">Analyzing with Gemini...</div></div>
+      <div id="scanUploadArea">
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" class="upload-input" id="photoInput" accept="image/*" onchange="handlePhoto(event)"/>
+          <div class="upload-icon">📷</div>
+          <div class="upload-title" id="uz-title">Drop a pantry photo here</div>
+          <div class="upload-sub" id="uz-sub">JPG, PNG, WEBP — up to 10 MB</div>
+        </div>
+        <div id="previewBox" style="display:none">
+          <div class="preview-container">
+            <img id="previewImg" class="preview-img" alt="Pantry preview"/>
+            <div class="preview-overlay">
+              <button class="btn" onclick="clearPhoto()" style="font-size:12px;padding:6px 12px" id="btn-clear">✕ Clear</button>
+              <button class="btn primary" onclick="analyzePhoto()" style="font-size:12px;padding:6px 14px" id="btn-analyze">✦ Analyze with Gemini</button>
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px" id="lbl-opts">Analysis Options</div>
+            <div class="analyze-opts">
+              <span class="chip active" id="chip-products" onclick="toggleChip(this)">🛒 Products</span>
+              <span class="chip active" id="chip-expiry" onclick="toggleChip(this)">📅 Expiry dates</span>
+              <span class="chip active" id="chip-qty" onclick="toggleChip(this)">🔢 Quantities</span>
+              <span class="chip" id="chip-nutrients" onclick="toggleChip(this)">🥗 Nutritional info</span>
+              <span class="chip" id="chip-barcodes" onclick="toggleChip(this)">📊 Barcodes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="scanResults" style="display:none">
+        <div class="alert alert-success" id="scan-alert">✓ <span id="scan-found">Found 8 products in your pantry</span></div>
+        <div class="results-grid" id="productsGrid"></div>
+      </div>
+    </div>
+
+    <!-- INVENTORY PANEL -->
+    <div class="panel" id="panel-inventory">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-val" id="stat-total">0</div><div class="stat-label" id="lbl-total">Total Products</div></div>
+        <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-val" id="stat-low" style="color:var(--amber)">0</div><div class="stat-label" id="lbl-low">Low Stock</div></div>
+        <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-val" id="stat-out" style="color:var(--red)">0</div><div class="stat-label" id="lbl-out">Out of Stock</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" id="stat-ok" style="color:var(--green)">0</div><div class="stat-label" id="lbl-ok">Well Stocked</div></div>
+      </div>
+      <div id="emptyInventory" class="empty-state">
+        <div class="empty-icon">📦</div>
+        <div class="empty-title" id="lbl-empty-inv">No inventory yet</div>
+        <div style="font-size:13px" id="lbl-empty-inv2">Scan your pantry to get started</div>
+      </div>
+      <table class="inventory-table" id="inventoryTable" style="display:none">
+        <thead>
+          <tr>
+            <th id="th-product">Product</th><th id="th-category">Category</th><th id="th-qty">Quantity</th><th id="th-status">Status</th><th id="th-stock">Stock Level</th>
+          </tr>
+        </thead>
+        <tbody id="inventoryBody"></tbody>
+      </table>
+    </div>
+
+    <!-- NUTRITION PANEL -->
+    <div class="panel" id="panel-nutrition">
+      <div class="tab-bar">
+        <button class="tab active" onclick="showNutTab('overview')" id="ntab-overview">Overview</button>
+        <button class="tab" onclick="showNutTab('detail')" id="ntab-detail">Product Detail</button>
+        <button class="tab" onclick="showNutTab('compare')" id="ntab-compare">Compare</button>
+      </div>
+      <div id="nut-overview">
+        <div id="emptyNutrition" class="empty-state">
+          <div class="empty-icon">🥗</div>
+          <div class="empty-title" id="lbl-nut-empty">No nutritional data yet</div>
+          <div style="font-size:13px" id="lbl-nut-empty2">Scan products and select "Nutritional info" to see details</div>
+        </div>
+        <div id="nutritionContent" style="display:none" class="nutrition-grid"></div>
+      </div>
+      <div id="nut-detail" style="display:none">
+        <select class="select" id="productSelect" onchange="loadProductDetail()" style="margin-bottom:16px;width:100%">
+          <option id="opt-select">-- Select a product --</option>
+        </select>
+        <div id="productDetailCard" class="product-detail"></div>
+      </div>
+      <div id="nut-compare" style="display:none">
+        <div class="alert alert-info">💡 <span id="lbl-compare-tip">Select two products to compare their nutritional values</span></div>
+        <div id="compareContent"></div>
+      </div>
+    </div>
+
+    <!-- RESEARCH PANEL -->
+    <div class="panel" id="panel-research">
+      <div class="alert alert-info" id="research-tip">🔍 <span id="lbl-research-tip">Ask Gemini about any food item — ingredients, origins, health benefits, allergens and more</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <input type="text" class="api-input" id="researchInput" style="flex:1;font-size:14px;padding:11px 14px;border-radius:var(--radius2)" placeholder="e.g. Is canned tuna healthy?" id="rph"/>
+        <button class="btn primary" onclick="doResearch()" id="btn-research">✦ Research</button>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px" id="lbl-quick">Quick Searches</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="chip" onclick="quickResearch('Nutritional benefits of olive oil')">Olive oil benefits</span>
+          <span class="chip" onclick="quickResearch('What are the best sources of protein?')">Best proteins</span>
+          <span class="chip" onclick="quickResearch('Foods high in vitamin C')">Vitamin C foods</span>
+          <span class="chip" onclick="quickResearch('Glycemic index of common foods')">Glycemic index</span>
+          <span class="chip" onclick="quickResearch('Common food allergens to watch for')">Allergens guide</span>
+          <span class="chip" onclick="quickResearch('Best anti-inflammatory foods')">Anti-inflammatory</span>
+        </div>
+      </div>
+      <div id="researchLoader" class="loader"><div class="spinner"></div><div class="loader-text" id="lbl-searching">Searching with Gemini...</div></div>
+      <div id="researchResult" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <div id="researchContent" style="font-size:14px;line-height:1.8;color:var(--text)"></div>
+      </div>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="panel" id="panel-chat">
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg">
+            <div class="chat-avatar avatar-ai">✦</div>
+            <div class="chat-bubble" id="chat-welcome">
+              <strong>PantryAI</strong> — Hello! I'm your pantry assistant. I can help you:<br><br>
+              • Identify products from photos<br>
+              • Track inventory and expiration dates<br>
+              • Suggest recipes from what you have<br>
+              • Analyze nutritional content<br>
+              • Build a shopping list for what's missing
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <textarea class="chat-textarea" id="chatInput" rows="1" placeholder="Ask anything about your pantry..." onkeydown="chatKeydown(event)" id="chat-ph"></textarea>
+          <button class="send-btn" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEAL PLANNER PANEL -->
+    <div class="panel" id="panel-meal">
+      <div class="alert alert-info" id="meal-tip">🍽️ <span id="lbl-meal-tip">Gemini will suggest meals based on your current pantry inventory</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <select class="select" id="mealDiets">
+          <option value="">Any diet</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="vegan">Vegan</option>
+          <option value="keto">Keto</option>
+          <option value="gluten-free">Gluten-Free</option>
+        </select>
+        <select class="select" id="mealTime">
+          <option value="any">Any meal</option>
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="snack">Snack</option>
+        </select>
+        <button class="btn primary" onclick="generateMeals()" id="btn-meals">✦ Generate Meal Plan</button>
+      </div>
+      <div id="mealLoader" class="loader"><div class="spinner"></div><div class="loader-text">Generating meal ideas...</div></div>
+      <div id="mealResults" style="display:none"></div>
+    </div>
+
+    <!-- SHOPPING LIST PANEL -->
+    <div class="panel" id="panel-shopping">
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <input type="text" class="api-input" id="shopInput" style="flex:1;font-size:14px;padding:11px 14px;border-radius:var(--radius2)" placeholder="Add item manually..."/>
+        <button class="btn" onclick="addShopItem()" id="btn-add-shop">+ Add</button>
+        <button class="btn primary" onclick="generateShopList()" id="btn-gen-shop">✦ Auto-generate</button>
+      </div>
+      <div id="shopLoader" class="loader"><div class="spinner"></div><div class="loader-text">Analyzing stock...</div></div>
+      <div id="shoppingListContainer">
+        <div class="empty-state" id="emptyShop">
+          <div class="empty-icon">🛒</div>
+          <div class="empty-title" id="lbl-shop-empty">Shopping list is empty</div>
+          <div style="font-size:13px" id="lbl-shop-empty2">Add items manually or auto-generate from your inventory</div>
+        </div>
+        <div id="shopItems" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="panel" id="panel-settings">
+      <div class="settings-row">
+        <div><div class="settings-label" id="s1-label">Language</div><div class="settings-desc" id="s1-desc">Interface language</div></div>
+        <div class="settings-ctrl">
+          <select class="select" id="langSelect" onchange="setLang(this.value)">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label" id="s2-label">Auto-save inventory</div><div class="settings-desc" id="s2-desc">Automatically save scan results to inventory</div></div>
+        <div class="settings-ctrl"><button class="toggle on" id="tog-autosave" onclick="toggleSetting(this)"></button></div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label" id="s3-label">Low stock alerts</div><div class="settings-desc" id="s3-desc">Alert when quantity drops below threshold</div></div>
+        <div class="settings-ctrl"><button class="toggle on" id="tog-alerts" onclick="toggleSetting(this)"></button></div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label" id="s4-label">Expiry notifications</div><div class="settings-desc" id="s4-desc">Warn about products expiring within 7 days</div></div>
+        <div class="settings-ctrl"><button class="toggle" id="tog-expiry" onclick="toggleSetting(this)"></button></div>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label" id="s5-label">Nutritional units</div><div class="settings-desc" id="s5-desc">Default measurement units</div></div>
+        <div class="settings-ctrl"><select class="select"><option>per 100g</option><option>per serving</option><option>per 100ml</option></select></div>
+      </div>
+      <div class="github-banner">
+        <div class="github-icon">⬡</div>
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:15px;margin-bottom:4px">GitHub — Ready to deploy</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:12px">This app is production-ready. Clone the repo and set your Gemini API key.</div>
+          <div class="github-code"><span class="c"># Clone repository</span>
+<span class="k">git clone</span> <span class="s">https://github.com/your-user/pantryai</span>
+<span class="k">cd</span> pantryai
+
+<span class="c"># Set environment variable</span>
+<span class="v">VITE_GEMINI_KEY</span>=<span class="s">"AIzaSy..."</span>
+
+<span class="c"># Install & run</span>
+<span class="k">npm install</span> && <span class="k">npm run dev</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script>
+const T={
+  en:{
+    scan:'Scan Pantry',scanSub:'Upload a photo to analyze your pantry with AI',
+    inventory:'Inventory',inventorySub:'Track all your pantry products',
+    nutrition:'Nutrition',nutritionSub:'Nutritional information and food analysis',
+    research:'Food Research',researchSub:'AI-powered food information',
+    chat:'AI Chat',chatSub:'Talk to your pantry assistant',
+    meal:'Meal Planner',mealSub:'Generate meal ideas from your pantry',
+    shopping:'Shopping List',shoppingSub:'Manage what you need to buy',
+    settings:'Settings',settingsSub:'Configure PantryAI',
+    notConnected:'Not connected',connected:'Connected',
+    found:'Found',products:'products in your pantry',
+    analyzing:'Analyzing with Gemini...',
+    total:'Total Products',low:'Low Stock',out:'Out of Stock',ok:'Well Stocked',
+    emptyInv:'No inventory yet',emptyInv2:'Scan your pantry to get started',
+    searchingGemini:'Searching with Gemini...',
+    welcome:'Hello! I\'m your pantry assistant powered by Gemini.',
+    scanFirst:'Please scan your pantry first using the Scan Pantry section.',
+    noApiKey:'Please enter your Gemini API key in the sidebar.',
+    apiKeyInvalid:'Invalid API key format. Should start with AIza...',
+    mealTip:'Gemini will suggest meals based on your current pantry inventory',
+    researchTip:'Ask Gemini about any food item — ingredients, origins, health benefits, allergens and more',
+    uploadPhoto:'Upload Photo',clearPhoto:'Clear',analyzeGemini:'Analyze with Gemini',
+    research:'Research',addShop:'+ Add',genShop:'Auto-generate',genMeals:'Generate Meal Plan',
+    shopEmpty:'Shopping list is empty',shopEmpty2:'Add items manually or auto-generate from your inventory',
+    nutEmpty:'No nutritional data yet',nutEmpty2:'Scan products with "Nutritional info" option',
+    quickSearches:'Quick Searches',opts:'Analysis Options',
+    dropHere:'Drop a pantry photo here',maxSize:'JPG, PNG, WEBP — up to 10 MB',
+    compareTip:'Select two products to compare their nutritional values',
+  },
+  es:{
+    scan:'Escanear Despensa',scanSub:'Sube una foto para analizar tu despensa con IA',
+    inventory:'Inventario',inventorySub:'Rastrea todos los productos de tu despensa',
+    nutrition:'Nutrición',nutritionSub:'Información nutricional y análisis de alimentos',
+    research:'Investigación',researchSub:'Información alimenticia con IA',
+    chat:'Chat IA',chatSub:'Habla con tu asistente de despensa',
+    meal:'Plan de Comidas',mealSub:'Genera ideas de comida con tu despensa',
+    shopping:'Lista de Compras',shoppingSub:'Administra lo que necesitas comprar',
+    settings:'Configuración',settingsSub:'Configurar PantryAI',
+    notConnected:'Sin conexión',connected:'Conectado',
+    found:'Se encontraron',products:'productos en tu despensa',
+    analyzing:'Analizando con Gemini...',
+    total:'Total Productos',low:'Stock Bajo',out:'Sin Stock',ok:'Bien Surtido',
+    emptyInv:'Sin inventario aún',emptyInv2:'Escanea tu despensa para comenzar',
+    searchingGemini:'Buscando con Gemini...',
+    welcome:'¡Hola! Soy tu asistente de despensa potenciado por Gemini.',
+    scanFirst:'Por favor escanea tu despensa primero en la sección Escanear Despensa.',
+    noApiKey:'Por favor ingresa tu API key de Gemini en el panel lateral.',
+    apiKeyInvalid:'Formato de API key inválido. Debe comenzar con AIza...',
+    mealTip:'Gemini sugerirá comidas basadas en tu inventario actual',
+    researchTip:'Pregunta a Gemini sobre cualquier alimento — ingredientes, origen, beneficios, alérgenos y más',
+    uploadPhoto:'Subir Foto',clearPhoto:'Limpiar',analyzeGemini:'Analizar con Gemini',
+    research:'Investigar',addShop:'+ Agregar',genShop:'Auto-generar',genMeals:'Generar Plan',
+    shopEmpty:'Lista de compras vacía',shopEmpty2:'Agrega artículos manualmente o auto-genera del inventario',
+    nutEmpty:'Sin datos nutricionales aún',nutEmpty2:'Escanea productos con opción "Info Nutricional"',
+    quickSearches:'Búsquedas Rápidas',opts:'Opciones de Análisis',
+    dropHere:'Arrastra una foto de tu despensa aquí',maxSize:'JPG, PNG, WEBP — hasta 10 MB',
+    compareTip:'Selecciona dos productos para comparar sus valores nutricionales',
+  }
+};
+
+let lang='en';
+let inventory=[];
+let shoppingList=[];
+let chatHistory=[];
+let currentPhotoBase64=null;
+let currentPhotoMime='image/jpeg';
+
+function t(k){return T[lang][k]||k}
+
+function setLang(l){
+  lang=l;
+  document.getElementById('langEN').className='lang-btn'+(l==='en'?' active':'');
+  document.getElementById('langES').className='lang-btn'+(l==='es'?' active':'');
+  document.getElementById('langSelect').value=l;
+  applyTranslations();
+}
+
+function applyTranslations(){
+  const panel=document.querySelector('.panel.active');
+  const id=panel?panel.id.replace('panel-',''):'scan';
+  const titles={scan:['scan','scanSub'],inventory:['inventory','inventorySub'],nutrition:['nutrition','nutritionSub'],research:['research','researchSub'],chat:['chat','chatSub'],meal:['meal','mealSub'],shopping:['shopping','shoppingSub'],settings:['settings','settingsSub']};
+  if(titles[id]){document.getElementById('pageTitle').textContent=t(titles[id][0]);document.getElementById('pageSub').textContent=t(titles[id][1]);}
+  const nav=['scan','inventory','nutrition','research','chat','meal','shopping','settings'];
+  const navIds=['nav-scan','nav-inventory','nav-nutrition','nav-research','nav-chat','nav-meal','nav-shopping','nav-settings'];
+  navIds.forEach((ni,i)=>{const el=document.getElementById(ni);if(el)el.textContent=t(nav[i]);});
+  updateApiStatus();
+  const ids={
+    'stat-total':()=>t('total'),'stat-low':()=>t('low'),'stat-out':()=>t('out'),'stat-ok':()=>t('ok'),
+    'lbl-total':()=>t('total'),'lbl-low':()=>t('low'),'lbl-out':()=>t('out'),'lbl-ok':()=>t('ok'),
+  };
+  const setById=(id,fn)=>{const el=document.getElementById(id);if(el)el.textContent=fn();};
+  setById('lbl-total',()=>t('total'));setById('lbl-low',()=>t('low'));
+  setById('lbl-out',()=>t('out'));setById('lbl-ok',()=>t('ok'));
+  setById('lbl-empty-inv',()=>t('emptyInv'));setById('lbl-empty-inv2',()=>t('emptyInv2'));
+  setById('lbl-nut-empty',()=>t('nutEmpty'));setById('lbl-nut-empty2',()=>t('nutEmpty2'));
+  setById('lbl-shop-empty',()=>t('shopEmpty'));setById('lbl-shop-empty2',()=>t('shopEmpty2'));
+  setById('uz-title',()=>t('dropHere'));setById('uz-sub',()=>t('maxSize'));
+  setById('lbl-opts',()=>t('opts'));setById('lbl-quick',()=>t('quickSearches'));
+  setById('lbl-compare-tip',()=>t('compareTip'));
+  setById('lbl-meal-tip',()=>t('mealTip'));setById('lbl-research-tip',()=>t('researchTip'));
+  setById('lbl-searching',()=>t('searchingGemini'));setById('loaderMsg',()=>t('analyzing'));
+  setById('btn-upload',()=>t('uploadPhoto'));setById('btn-clear',()=>t('clearPhoto'));
+  setById('btn-analyze',()=>t('analyzeGemini'));
+  setById('btn-meals',()=>t('genMeals'));setById('btn-gen-shop',()=>t('genShop'));
+}
+
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{if(b.querySelector('span')&&b.querySelector('span').id==='nav-'+id)b.classList.add('active');});
+  const titles={scan:['scan','scanSub'],inventory:['inventory','inventorySub'],nutrition:['nutrition','nutritionSub'],research:['research','researchSub'],chat:['chat','chatSub'],meal:['meal','mealSub'],shopping:['shopping','shoppingSub'],settings:['settings','settingsSub']};
+  if(titles[id]){document.getElementById('pageTitle').textContent=t(titles[id][0]);document.getElementById('pageSub').textContent=t(titles[id][1]);}
+  const uploadBtn=document.getElementById('uploadBtn');
+  uploadBtn.style.display=id==='scan'?'flex':'none';
+  if(id==='inventory')renderInventory();
+  if(id==='shopping')renderShoppingList();
+}
+
+function updateApiStatus(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  const dot=document.getElementById('apiDot');
+  const status=document.getElementById('apiStatus');
+  if(key.startsWith('AIza')&&key.length>20){
+    dot.className='dot connected';status.textContent=t('connected');status.style.color='var(--green)';
+  }else{
+    dot.className='dot';status.textContent=t('notConnected');status.style.color='var(--text3)';
+  }
+}
+
+function triggerUpload(){document.getElementById('photoInput').click();}
+
+function handlePhoto(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  currentPhotoMime=file.type||'image/jpeg';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    currentPhotoBase64=e.target.result.split(',')[1];
+    document.getElementById('previewImg').src=e.target.result;
+    document.getElementById('previewBox').style.display='block';
+    document.getElementById('uploadZone').style.display='none';
+    document.getElementById('scanResults').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto(){
+  currentPhotoBase64=null;
+  document.getElementById('previewBox').style.display='none';
+  document.getElementById('uploadZone').style.display='block';
+  document.getElementById('scanResults').style.display='none';
+  document.getElementById('photoInput').value='';
+}
+
+function toggleChip(el){el.classList.toggle('active');}
+
+async function analyzePhoto(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key.startsWith('AIza')){alert(t('noApiKey'));return;}
+  if(!currentPhotoBase64){return;}
+  const chips={products:document.getElementById('chip-products').classList.contains('active'),expiry:document.getElementById('chip-expiry').classList.contains('active'),qty:document.getElementById('chip-qty').classList.contains('active'),nutrients:document.getElementById('chip-nutrients').classList.contains('active'),barcodes:document.getElementById('chip-barcodes').classList.contains('active')};
+  document.getElementById('scanLoading').style.display='flex';
+  document.getElementById('previewBox').style.display='none';
+  document.getElementById('scanResults').style.display='none';
+  const langInstr=lang==='es'?'Responde en español.':'Respond in English.';
+  const prompt=`You are a pantry inventory expert. Analyze this pantry/kitchen/shelf photo and identify all food products visible.
+${langInstr}
+Return ONLY a valid JSON array (no markdown, no explanation) with objects having these fields:
+- name: product name
+- brand: brand name if visible (or "")
+- category: one of [Grains, Dairy, Proteins, Vegetables, Fruits, Condiments, Snacks, Beverages, Canned, Spices, Other]
+- quantity: estimated number of units visible (integer)
+- status: "ok" if 3+, "low" if 1-2, "out" if 0
+${chips.expiry?'- expiry: expiry date if visible (or "Unknown")':''}
+${chips.nutrients?'- calories: estimated per 100g\n- protein: grams per 100g\n- carbs: grams per 100g\n- fat: grams per 100g':''}
+Example: [{"name":"Olive Oil","brand":"Bertolli","category":"Condiments","quantity":2,"status":"low"}]`;
+
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:currentPhotoMime,data:currentPhotoBase64}},{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:2048}})
+    });
+    const data=await resp.json();
+    if(data.error){throw new Error(data.error.message);}
+    let text=data.candidates?.[0]?.content?.parts?.[0]?.text||'[]';
+    text=text.replace(/```json|```/g,'').trim();
+    const products=JSON.parse(text);
+    inventory=[...inventory,...products.map((p,i)=>({...p,id:Date.now()+i}))];
+    renderScanResults(products);
+  }catch(e){
+    alert('Error: '+e.message);
+    document.getElementById('previewBox').style.display='block';
+  }finally{
+    document.getElementById('scanLoading').style.display='none';
+  }
+}
+
+function renderScanResults(products){
+  document.getElementById('scan-found').textContent=`${t('found')} ${products.length} ${t('products')}`;
+  document.getElementById('scanResults').style.display='block';
+  const grid=document.getElementById('productsGrid');
+  grid.innerHTML=products.map(p=>{
+    const statusClass=p.status==='ok'?'status-ok':p.status==='low'?'status-low':'status-out';
+    const statusLabel=p.status==='ok'?'In Stock':p.status==='low'?'Low':'Out';
+    return `<div class="product-card">
+      <div class="product-cat">${p.category||'Other'}</div>
+      <div class="product-name">${p.name}${p.brand?'<span style="font-size:11px;color:var(--text3);display:block">${p.brand}</span>':''}</div>
+      ${p.expiry?`<div style="font-size:11px;color:var(--text3);margin-top:4px">📅 ${p.expiry}</div>`:''}
+      ${p.calories?`<div style="font-size:11px;color:var(--teal);margin-top:4px">~${p.calories} kcal/100g</div>`:''}
+      <div class="product-qty">
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="changeQty(this,-1)">−</button>
+          <span class="qty-val">${p.quantity||1}</span>
+          <button class="qty-btn" onclick="changeQty(this,1)">+</button>
+        </div>
+        <span class="status-badge ${statusClass}">${statusLabel}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeQty(btn,delta){
+  const val=btn.parentNode.querySelector('.qty-val');
+  let n=parseInt(val.textContent)+delta;
+  if(n<0)n=0;
+  val.textContent=n;
+}
+
+function renderInventory(){
+  const total=inventory.length;
+  const low=inventory.filter(p=>p.status==='low').length;
+  const out=inventory.filter(p=>p.status==='out').length;
+  const ok=inventory.filter(p=>p.status==='ok').length;
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-low').textContent=low;
+  document.getElementById('stat-out').textContent=out;
+  document.getElementById('stat-ok').textContent=ok;
+  const emptyEl=document.getElementById('emptyInventory');
+  const tableEl=document.getElementById('inventoryTable');
+  if(total===0){emptyEl.style.display='block';tableEl.style.display='none';return;}
+  emptyEl.style.display='none';tableEl.style.display='table';
+  const body=document.getElementById('inventoryBody');
+  body.innerHTML=inventory.map(p=>{
+    const statusClass=p.status==='ok'?'status-ok':p.status==='low'?'status-low':'status-out';
+    const statusLabel=p.status==='ok'?'In Stock':p.status==='low'?'Low':'Out';
+    const pct=p.status==='ok'?80:p.status==='low'?30:5;
+    const color=p.status==='ok'?'var(--green)':p.status==='low'?'var(--amber)':'var(--red)';
+    return `<tr>
+      <td><span style="font-weight:500">${p.name}</span>${p.brand?`<span style="font-size:11px;color:var(--text3);display:block">${p.brand}</span>`:''}</td>
+      <td><span class="tag tag-blue">${p.category||'Other'}</span></td>
+      <td>${p.quantity||1}</td>
+      <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+      <td><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+function showNutTab(id){
+  ['overview','detail','compare'].forEach(t=>{document.getElementById('nut-'+t).style.display='none';document.getElementById('ntab-'+t).classList.remove('active');});
+  document.getElementById('nut-'+id).style.display='block';
+  document.getElementById('ntab-'+id).classList.add('active');
+}
+
+async function sendChat(){
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim();
+  if(!text)return;
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key.startsWith('AIza')){addChatMsg('ai',t('noApiKey'));return;}
+  addChatMsg('user',text);
+  input.value='';
+  const msgs=document.getElementById('chatMessages');
+  const typing=document.createElement('div');
+  typing.className='chat-msg';typing.id='typing';
+  typing.innerHTML='<div class="chat-avatar avatar-ai">✦</div><div class="chat-bubble"><div class="spinner" style="width:18px;height:18px;margin:4px"></div></div>';
+  msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
+  const invContext=inventory.length>0?`Current inventory: ${inventory.map(p=>`${p.name}(qty:${p.quantity||1})`).join(', ')}. `:'';
+  const langInstr=lang==='es'?'Responde en español.':'Respond in English.';
+  chatHistory.push({role:'user',parts:[{text:invContext+text}]});
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system_instruction:{parts:[{text:`You are PantryAI, a helpful pantry and nutrition assistant. ${langInstr} Be concise and practical.`}]},contents:chatHistory,generationConfig:{maxOutputTokens:1024}})
+    });
+    const data=await resp.json();
+    const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'...';
+    chatHistory.push({role:'model',parts:[{text:reply}]});
+    document.getElementById('typing').remove();
+    addChatMsg('ai',reply);
+  }catch(e){document.getElementById('typing')?.remove();addChatMsg('ai','Error: '+e.message);}
+}
+
+function addChatMsg(role,text){
+  const msgs=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className='chat-msg';
+  const formattedText=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  div.innerHTML=`<div class="chat-avatar ${role==='ai'?'avatar-ai':'avatar-user'}">${role==='ai'?'✦':'U'}</div><div class="chat-bubble${role==='user'?' user':''}">${formattedText}</div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function chatKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+
+async function doResearch(){
+  const query=document.getElementById('researchInput').value.trim();
+  if(!query)return;
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key.startsWith('AIza')){alert(t('noApiKey'));return;}
+  document.getElementById('researchLoader').style.display='flex';
+  document.getElementById('researchResult').style.display='none';
+  const langInstr=lang==='es'?'Responde en español con formato claro.':'Respond in English with clear formatting.';
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:`You are a food and nutrition expert. ${langInstr} Answer this food research question thoroughly but concisely, using markdown-style formatting with **bold** for important points:\n\n${query}`}]}],generationConfig:{maxOutputTokens:1024}})
+    });
+    const data=await resp.json();
+    const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'No response';
+    document.getElementById('researchContent').innerHTML=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>').replace(/##\s*(.*)/g,'<h3 style="font-size:15px;margin:12px 0 6px;color:var(--text)">$1</h3>').replace(/•\s/g,'<span style="color:var(--teal)">•</span> ');
+    document.getElementById('researchResult').style.display='block';
+  }catch(e){alert('Error: '+e.message);}
+  finally{document.getElementById('researchLoader').style.display='none';}
+}
+
+function quickResearch(query){document.getElementById('researchInput').value=query;doResearch();}
+
+async function generateMeals(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key.startsWith('AIza')){alert(t('noApiKey'));return;}
+  if(inventory.length===0){alert(t('scanFirst'));return;}
+  const diet=document.getElementById('mealDiets').value;
+  const mealType=document.getElementById('mealTime').value;
+  document.getElementById('mealLoader').style.display='flex';
+  document.getElementById('mealResults').style.display='none';
+  const invList=inventory.map(p=>p.name).join(', ');
+  const langInstr=lang==='es'?'Responde en español.':'Respond in English.';
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:`${langInstr} You are a chef and nutritionist. Based on these available ingredients: ${invList}. Generate 3 meal suggestions${diet?' for '+diet+' diet':''}${mealType&&mealType!=='any'?' for '+mealType:''}.
+Return ONLY a JSON array (no markdown) with: [{"name":"...","description":"...","ingredients":["..."],"time":"20 min","difficulty":"Easy","calories":350,"tags":["..."]}]`}]}],generationConfig:{temperature:0.7,maxOutputTokens:1024}})
+    });
+    const data=await resp.json();
+    let text=data.candidates?.[0]?.content?.parts?.[0]?.text||'[]';
+    text=text.replace(/```json|```/g,'').trim();
+    const meals=JSON.parse(text);
+    const container=document.getElementById('mealResults');
+    container.innerHTML=`<div style="display:grid;gap:14px">${meals.map(m=>`
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div><div style="font-size:16px;font-weight:500">${m.name}</div><div style="font-size:12px;color:var(--text3);margin-top:2px">${m.description}</div></div>
+          <div style="text-align:right;flex-shrink:0;margin-left:16px"><div style="font-size:14px;color:var(--teal);font-weight:500">${m.calories||'~'}kcal</div><div style="font-size:11px;color:var(--text3)">${m.time||''}</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:10px">${(m.tags||[]).map(tag=>`<span class="tag tag-green">${tag}</span>`).join('')}<span class="tag tag-amber">${m.difficulty||'Medium'}</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-top:10px"><strong style="color:var(--text3)">Ingredients: </strong>${(m.ingredients||[]).join(', ')}</div>
+      </div>`).join('')}</div>`;
+    container.style.display='block';
+  }catch(e){alert('Error: '+e.message);}
+  finally{document.getElementById('mealLoader').style.display='none';}
+}
+
+function addShopItem(){
+  const input=document.getElementById('shopInput');
+  const val=input.value.trim();
+  if(!val)return;
+  shoppingList.push({name:val,checked:false,id:Date.now()});
+  input.value='';
+  renderShoppingList();
+}
+
+async function generateShopList(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key.startsWith('AIza')){alert(t('noApiKey'));return;}
+  document.getElementById('shopLoader').style.display='flex';
+  const langInstr=lang==='es'?'en español':'in English';
+  const invList=inventory.length>0?inventory.map(p=>`${p.name}:${p.status}`).join(', '):'empty pantry';
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:`Based on this pantry inventory: ${invList}. Generate a shopping list ${langInstr} of items that are low or missing. Return ONLY a JSON array of strings with product names. Max 12 items.`}]}],generationConfig:{maxOutputTokens:512}})
+    });
+    const data=await resp.json();
+    let text=data.candidates?.[0]?.content?.parts?.[0]?.text||'[]';
+    text=text.replace(/```json|```/g,'').trim();
+    const items=JSON.parse(text);
+    items.forEach(name=>shoppingList.push({name,checked:false,id:Date.now()+Math.random()}));
+    renderShoppingList();
+  }catch(e){alert('Error: '+e.message);}
+  finally{document.getElementById('shopLoader').style.display='none';}
+}
+
+function renderShoppingList(){
+  const container=document.getElementById('shopItems');
+  const empty=document.getElementById('emptyShop');
+  if(shoppingList.length===0){empty.style.display='block';container.style.display='none';return;}
+  empty.style.display='none';container.style.display='block';
+  container.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">${shoppingList.map((item,i)=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);${item.checked?'opacity:0.5':''}">
+      <input type="checkbox" ${item.checked?'checked':''} onchange="toggleShop(${i})" style="width:16px;height:16px;cursor:pointer;accent-color:var(--teal)"/>
+      <span style="flex:1;font-size:14px;${item.checked?'text-decoration:line-through':''}">${item.name}</span>
+      <button onclick="removeShop(${i})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 6px">×</button>
+    </div>`).join('')}</div>
+  <div style="margin-top:12px;font-size:13px;color:var(--text3)">${shoppingList.filter(i=>!i.checked).length} items remaining</div>`;
+}
+
+function toggleShop(i){shoppingList[i].checked=!shoppingList[i].checked;renderShoppingList();}
+function removeShop(i){shoppingList.splice(i,1);renderShoppingList();}
+function toggleSetting(btn){btn.classList.toggle('on');}
+
+updateApiStatus();
+</script>
+</body>
+</html>
